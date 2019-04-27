@@ -7,3 +7,6 @@ spec:
   dashboardNamespaceSelector:
     matchLabels:
       monitoring-key: middleware
+  dashboardLabelSelector:
+    matchLabels:
+      monitoring-key: experimental

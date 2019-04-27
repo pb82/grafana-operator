@@ -220,6 +220,11 @@ func (in *GrafanaSpec) DeepCopyInto(out *GrafanaSpec) {
 		*out = new(v1.LabelSelector)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.DashboardLabelSelector != nil {
+		in, out := &in.DashboardLabelSelector, &out.DashboardLabelSelector
+		*out = new(v1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

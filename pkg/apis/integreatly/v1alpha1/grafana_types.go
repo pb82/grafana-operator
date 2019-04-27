@@ -13,6 +13,7 @@ type GrafanaSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	PrometheusUrl              string                `json:"prometheusUrl"`
 	DashboardNamespaceSelector *metav1.LabelSelector `json:"dashboardNamespaceSelector,omitempty"`
+	DashboardLabelSelector     *metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
 }
 
 // GrafanaStatus defines the observed state of Grafana

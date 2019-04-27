@@ -3,6 +3,7 @@ package grafana
 import (
 	"bytes"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -51,11 +52,11 @@ type GrafanaTemplateHelper struct {
 // templates properties. Some of them (like the hostname) are set
 // by the user in the custom resource
 func newTemplateHelper(cr *integreatly.Grafana) *GrafanaTemplateHelper {
-	controllerConfig := GetControllerConfig()
+	controllerConfig := common.GetControllerConfig()
 
 	param := GrafanaParamaeters{
-		GrafanaImage:                    controllerConfig.GetConfigItem(ConfigGrafanaImage, GrafanaImage),
-		GrafanaVersion:                  controllerConfig.GetConfigItem(ConfigGrafanaImageTag, GrafanaVersion),
+		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, GrafanaImage),
+		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, GrafanaVersion),
 		Namespace:                       cr.Namespace,
 		GrafanaConfigMapName:            GrafanaConfigMapName,
 		GrafanaProvidersConfigMapName:   GrafanaProvidersConfigMapName,

@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -44,8 +45,9 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileGrafana{
 		client:  mgr.GetClient(),
 		scheme:  mgr.GetScheme(),
-		helper:  newKubeHelper(),
+		helper:  NewKubeHelper(),
 		plugins: newPluginsHelper(),
+		config: common.GetControllerConfig(),
 	}
 }
 
@@ -59,10 +61,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to primary resource Grafana
 	err = c.Watch(&source.Kind{Type: &integreatly.Grafana{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 var _ reconcile.Reconciler = &ReconcileGrafana{}
@@ -75,6 +74,7 @@ type ReconcileGrafana struct {
 	scheme  *runtime.Scheme
 	helper  *KubeHelperImpl
 	plugins *PluginsHelperImpl
+	config *common.ControllerConfig
 }
 
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
@@ -102,7 +102,9 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 	case PhaseInstallGrafana:
 		return r.InstallGrafana(instanceCopy)
 	case PhaseDone:
-		return r.ReconcileNamespaces(instanceCopy)
+		r.config.AddConfigItem(common.ConfigDashboardLabelSelector, instanceCopy.Spec.DashboardLabelSelector)
+		return reconcile.Result{}, nil
+		// return r.ReconcileNamespaces(instanceCopy)
 	}
 
 	return reconcile.Result{RequeueAfter: time.Second * 10}, nil

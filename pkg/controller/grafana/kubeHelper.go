@@ -19,7 +19,7 @@ type KubeHelperImpl struct {
 	grclient *gr.Clientset
 }
 
-func newKubeHelper() *KubeHelperImpl {
+func NewKubeHelper() *KubeHelperImpl {
 	config := config.GetConfigOrDie()
 
 	k8client := kubernetes.NewForConfigOrDie(config)
@@ -79,6 +79,15 @@ func (h KubeHelperImpl) updateDashboard(monitoringNamespace string, dashboardNam
 
 	configMap.Data[dashboard.Spec.Name] = dashboard.Spec.Json
 	configMap, err = h.k8client.CoreV1().ConfigMaps(monitoringNamespace).Update(configMap)
+	if err != nil {
+		return err
+	}
+
+	if len(dashboard.Finalizers) == 0 {
+		dashboard.Finalizers = append(dashboard.Finalizers, "grafana.dashboard.cleanup")
+		_, err = h.grclient.IntegreatlyV1alpha1().GrafanaDashboards(dashboardNamespace).Update(dashboard)
+	}
+
 	return err
 }
 
