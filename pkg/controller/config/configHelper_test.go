@@ -1,13 +1,13 @@
-package grafana
+package config
 
 import (
 	"github.com/go-ini/ini"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/pkg/controller/grafana"
 	"testing"
 )
 
 func TestIniConfig_Build(t *testing.T) {
-	cr := MockCR.DeepCopy()
+	cr := grafana.MockCR.DeepCopy()
 	cr.Spec.Config.Auth.DisableLoginForm = true
 	cr.Spec.Config.Auth.LoginCookieName = "dummy"
 
@@ -27,19 +27,19 @@ func TestIniConfig_Build(t *testing.T) {
 		t.Error(err)
 	}
 
-	if key, err := sect.GetKey("data"); err != nil || key.String() != common.GrafanaDataPath {
+	if key, err := sect.GetKey("data"); err != nil || key.String() != GrafanaDataPath {
 		t.Errorf("invalid value for grafana data path")
 	}
 
-	if key, err := sect.GetKey("logs"); err != nil || key.String() != common.GrafanaLogsPath {
+	if key, err := sect.GetKey("logs"); err != nil || key.String() != GrafanaLogsPath {
 		t.Errorf("invalid value for grafana logs path")
 	}
 
-	if key, err := sect.GetKey("plugins"); err != nil || key.String() != common.GrafanaPluginsPath {
+	if key, err := sect.GetKey("plugins"); err != nil || key.String() != GrafanaPluginsPath {
 		t.Errorf("invalid value for grafana plugins path")
 	}
 
-	if key, err := sect.GetKey("provisioning"); err != nil || key.String() != common.GrafanaProvisioningPath {
+	if key, err := sect.GetKey("provisioning"); err != nil || key.String() != GrafanaProvisioningPath {
 		t.Errorf("invalid value for grafana provisioning path")
 	}
 

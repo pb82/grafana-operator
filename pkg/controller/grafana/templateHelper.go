@@ -3,13 +3,12 @@ package grafana
 import (
 	"bytes"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	"os"
 	"strings"
 	"text/template"
-
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 )
@@ -78,7 +77,7 @@ func getServiceType(serviceType string) string {
 	case v1.ServiceTypeLoadBalancer:
 		return serviceType
 	default:
-		return common.DefaultServiceType
+		return config.DefaultServiceType
 	}
 }
 
@@ -98,7 +97,7 @@ func getLogLevel(userLogLevel string) string {
 	case "critical":
 		return level
 	default:
-		return common.DefaultLogLevel
+		return config.DefaultLogLevel
 	}
 }
 
@@ -106,7 +105,7 @@ func getLogLevel(userLogLevel string) string {
 // templates properties. Some of them (like the hostname) are set
 // by the user in the custom resource
 func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
-	controllerConfig := common.GetControllerConfig()
+	controllerConfig := config.GetControllerConfig()
 
 	param := GrafanaParameters{
 		AdminPassword:                   option(cr.Spec.AdminPassword, "secret"),
@@ -116,31 +115,30 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		DisableLoginForm:                cr.Spec.DisableLoginForm,
 		DisableSignoutMenu:              cr.Spec.DisableSignoutMenu,
 		GrafanaConfigHash:               cr.Status.LastConfig,
-		GrafanaConfigMapName:            common.GrafanaConfigMapName,
-		GrafanaDashboardsConfigMapName:  common.GrafanaDashboardsConfigMapName,
-		GrafanaDatasourcesConfigMapName: common.GrafanaDatasourcesConfigMapName,
-		GrafanaDeploymentName:           common.GrafanaDeploymentName,
-		GrafanaImage:                    controllerConfig.GetConfigString(common.ConfigGrafanaImage, common.GrafanaImage),
+		GrafanaConfigMapName:            config.GrafanaConfigMapName,
+		GrafanaDashboardsConfigMapName:  config.GrafanaDashboardsConfigMapName,
+		GrafanaDatasourcesConfigMapName: config.GrafanaDatasourcesConfigMapName,
+		GrafanaDeploymentName:           config.GrafanaDeploymentName,
+		GrafanaImage:                    controllerConfig.GetConfigString(config.ConfigGrafanaImage, config.GrafanaImage),
 		GrafanaIngressAnnotations:       cr.Spec.Ingress.Annotations,
 		GrafanaIngressLabels:            cr.Spec.Ingress.Labels,
-		GrafanaIngressName:              common.GrafanaIngressName,
+		GrafanaIngressName:              config.GrafanaIngressName,
 		GrafanaIngressPath:              cr.Spec.Ingress.Path,
 		GrafanaIngressTLSEnabled:        cr.Spec.Ingress.TLSEnabled,
 		GrafanaIngressTLSSecretName:     cr.Spec.Ingress.TLSSecretName,
-		GrafanaProvidersConfigMapName:   common.GrafanaProvidersConfigMapName,
-		GrafanaRouteName:                common.GrafanaRouteName,
-		GrafanaServiceAccountName:       common.GrafanaServiceAccountName,
+		GrafanaProvidersConfigMapName:   config.GrafanaProvidersConfigMapName,
+		GrafanaRouteName:                config.GrafanaRouteName,
+		GrafanaServiceAccountName:       config.GrafanaServiceAccountName,
 		GrafanaServiceAnnotations:       cr.Spec.Service.Annotations,
 		GrafanaServiceLabels:            cr.Spec.Service.Labels,
-		GrafanaServiceName:              common.GrafanaServiceName,
-		GrafanaServiceType:              cr.Spec.Service.Type,
-		GrafanaVersion:                  controllerConfig.GetConfigString(common.ConfigGrafanaImageTag, common.GrafanaVersion),
+		GrafanaServiceName:              config.GrafanaServiceName,
+		GrafanaVersion:                  controllerConfig.GetConfigString(config.ConfigGrafanaImageTag, config.GrafanaVersion),
 		Hostname:                        cr.Spec.Ingress.Hostname,
 		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
 		Namespace:                       cr.Namespace,
-		PluginsInitContainerImage:       controllerConfig.GetConfigString(common.ConfigPluginsInitContainerImage, common.PluginsInitContainerImage),
-		PluginsInitContainerTag:         controllerConfig.GetConfigString(common.ConfigPluginsInitContainerTag, common.PluginsInitContainerTag),
-		PodLabelValue:                   controllerConfig.GetConfigString(common.ConfigPodLabelValue, common.PodLabelDefaultValue),
+		PluginsInitContainerImage:       controllerConfig.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage),
+		PluginsInitContainerTag:         controllerConfig.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag),
+		PodLabelValue:                   controllerConfig.GetConfigString(config.ConfigPodLabelValue, config.PodLabelDefaultValue),
 		Replicas:                        cr.Spec.InitialReplicas,
 	}
 

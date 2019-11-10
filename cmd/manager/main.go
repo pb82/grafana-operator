@@ -7,6 +7,7 @@ import (
 	"github.com/integr8ly/grafana-operator/pkg/apis"
 	"github.com/integr8ly/grafana-operator/pkg/controller"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	config2 "github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"github.com/integr8ly/grafana-operator/pkg/controller/grafanadashboard"
 	"github.com/integr8ly/grafana-operator/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -46,7 +47,7 @@ func init() {
 	flagset.StringVar(&flagImageTag, "grafana-image-tag", "", "Overrides the default Grafana image tag")
 	flagset.StringVar(&flagPluginsInitContainerImage, "grafana-plugins-init-container-image", "", "Overrides the default Grafana Plugins Init Container image")
 	flagset.StringVar(&flagPluginsInitContainerTag, "grafana-plugins-init-container-tag", "", "Overrides the default Grafana Plugins Init Container tag")
-	flagset.StringVar(&flagPodLabelValue, "pod-label-value", common.PodLabelDefaultValue, "Overrides the default value of the app label")
+	flagset.StringVar(&flagPodLabelValue, "pod-label-value", config2.PodLabelDefaultValue, "Overrides the default value of the app label")
 	flagset.StringVar(&flagNamespaces, "namespaces", "", "Namespaces to scope the interaction of the Grafana operator. Mutually exclusive with --scan-all")
 	flagset.BoolVar(&scanAll, "scan-all", false, "Scans all namespaces for dashboards")
 	flagset.Parse(os.Args[1:])
@@ -115,14 +116,14 @@ func main() {
 	}
 
 	// Controller configuration
-	controllerConfig := common.GetControllerConfig()
-	controllerConfig.AddConfigItem(common.ConfigGrafanaImage, flagImage)
-	controllerConfig.AddConfigItem(common.ConfigGrafanaImageTag, flagImageTag)
-	controllerConfig.AddConfigItem(common.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
-	controllerConfig.AddConfigItem(common.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
-	controllerConfig.AddConfigItem(common.ConfigPodLabelValue, flagPodLabelValue)
-	controllerConfig.AddConfigItem(common.ConfigOperatorNamespace, namespace)
-	controllerConfig.AddConfigItem(common.ConfigDashboardLabelSelector, "")
+	controllerConfig := config2.GetControllerConfig()
+	controllerConfig.AddConfigItem(config2.ConfigGrafanaImage, flagImage)
+	controllerConfig.AddConfigItem(config2.ConfigGrafanaImageTag, flagImageTag)
+	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerImage, flagPluginsInitContainerImage)
+	controllerConfig.AddConfigItem(config2.ConfigPluginsInitContainerTag, flagPluginsInitContainerTag)
+	controllerConfig.AddConfigItem(config2.ConfigPodLabelValue, flagPodLabelValue)
+	controllerConfig.AddConfigItem(config2.ConfigOperatorNamespace, namespace)
+	controllerConfig.AddConfigItem(config2.ConfigDashboardLabelSelector, "")
 
 	// Get the namespaces to scan for dashboards
 	// It's either the same namespace as the controller's or it's all namespaces if the

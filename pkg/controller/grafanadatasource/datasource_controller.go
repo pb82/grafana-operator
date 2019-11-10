@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 
 	"github.com/ghodss/yaml"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
@@ -111,7 +112,7 @@ func (r *ReconcileGrafanaDataSource) Reconcile(request reconcile.Request) (recon
 		// Requeue periodically to find datasources that have not been updated
 		// but are not yet imported (can happen if Grafana is uninstalled and
 		// then reinstalled without an Operator restart
-		res.RequeueAfter = common.RequeueDelay
+		res.RequeueAfter = config.RequeueDelay
 		return res, err
 	default:
 		return reconcile.Result{}, nil
@@ -147,7 +148,7 @@ func (r *ReconcileGrafanaDataSource) reconcileDatasource(cr *i8ly.GrafanaDataSou
 	}
 
 	if !updated {
-		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, err
 	}
 
 	err = r.helper.RestartGrafana()
@@ -205,7 +206,7 @@ func (r *ReconcileGrafanaDataSource) parseDataSource(cr *i8ly.GrafanaDataSource)
 
 func (r *ReconcileGrafanaDataSource) setFinalizer(cr *i8ly.GrafanaDataSource) (reconcile.Result, error) {
 	if len(cr.Finalizers) == 0 {
-		cr.Finalizers = append(cr.Finalizers, common.ResourceFinalizerName)
+		cr.Finalizers = append(cr.Finalizers, config.ResourceFinalizerName)
 	}
 	err := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, err

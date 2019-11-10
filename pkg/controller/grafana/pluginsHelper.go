@@ -5,6 +5,7 @@ import (
 	"fmt"
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"net/http"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ func newPluginsHelper() *PluginsHelperImpl {
 	}
 
 	helper := new(PluginsHelperImpl)
-	helper.BaseUrl = common.PluginsUrl
+	helper.BaseUrl = config.PluginsUrl
 	helper.HttpClient = &http.Client{Transport: insecureTransport}
 
 	return helper
@@ -77,9 +78,9 @@ func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList)
 }
 
 func (h *PluginsHelperImpl) CanUpdatePlugins() bool {
-	lastUpdate := common.GetControllerConfig().GetConfigTimestamp(common.ConfigGrafanaPluginsUpdated, time.Now())
+	lastUpdate := config.GetControllerConfig().GetConfigTimestamp(config.ConfigGrafanaPluginsUpdated, time.Now())
 	difference := time.Now().Sub(lastUpdate)
-	return difference.Seconds() >= common.PluginsMinAge
+	return difference.Seconds() >= config.PluginsMinAge
 }
 
 // Creates the list of plugins that can be added or updated

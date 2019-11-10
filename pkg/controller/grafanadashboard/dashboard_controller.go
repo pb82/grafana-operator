@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	defaultErrors "errors"
 	"fmt"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -42,7 +43,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileGrafanaDashboard{
 		client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
-		config: common.GetControllerConfig(),
+		config: config.GetControllerConfig(),
 		helper: common.NewKubeHelper(),
 	}
 }
@@ -72,16 +73,16 @@ type ReconcileGrafanaDashboard struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
-	config *common.ControllerConfig
+	config *config.ControllerConfig
 	helper *common.KubeHelperImpl
 }
 
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	dashboardLabelSelectors := r.config.GetConfigItem(common.ConfigDashboardLabelSelector, nil)
+	dashboardLabelSelectors := r.config.GetConfigItem(config.ConfigDashboardLabelSelector, nil)
 	if dashboardLabelSelectors == nil {
-		return reconcile.Result{RequeueAfter: common.RequeueDelay}, nil
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
 	// Fetch the GrafanaDashboard instance
@@ -129,7 +130,7 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		// Requeue periodically to find dashboards that have not been updated
 		// but are not yet imported (can happen if Grafana is uninstalled and
 		// then reinstalled without an Operator restart
-		res.RequeueAfter = common.RequeueDelay
+		res.RequeueAfter = config.RequeueDelay
 		return res, err
 	default:
 		return reconcile.Result{}, nil
@@ -187,7 +188,7 @@ func (r *ReconcileGrafanaDashboard) isJsonValid(d *i8ly.GrafanaDashboard, dashbo
 }
 
 func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
+	operatorNamespace := r.config.GetConfigString(config.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
 		return reconcile.Result{}, defaultErrors.New("operator namespace not yet known")
 	}
@@ -220,7 +221,7 @@ func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (r
 	}
 
 	if !updated {
-		return reconcile.Result{RequeueAfter: common.RequeueDelay}, err
+		return reconcile.Result{RequeueAfter: config.RequeueDelay}, err
 	}
 
 	// Reconcile dashboard plugins
@@ -262,7 +263,7 @@ func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboar
 }
 
 func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	operatorNamespace := r.config.GetConfigString(common.ConfigOperatorNamespace, "")
+	operatorNamespace := r.config.GetConfigString(config.ConfigOperatorNamespace, "")
 	if operatorNamespace == "" {
 		return reconcile.Result{}, defaultErrors.New("no monitoring namespace set")
 	}
@@ -284,7 +285,7 @@ func (r *ReconcileGrafanaDashboard) removeFinalizer(cr *i8ly.GrafanaDashboard) (
 
 func (r *ReconcileGrafanaDashboard) setFinalizer(cr *i8ly.GrafanaDashboard) (reconcile.Result, error) {
 	if len(cr.Finalizers) == 0 {
-		cr.Finalizers = append(cr.Finalizers, common.ResourceFinalizerName)
+		cr.Finalizers = append(cr.Finalizers, config.ResourceFinalizerName)
 	}
 	err := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, err

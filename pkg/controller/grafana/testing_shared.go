@@ -2,7 +2,7 @@ package grafana
 
 import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
+	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -18,13 +18,13 @@ var MockCR = v1alpha1.Grafana{
 }
 
 var Templates = []string{
-	common.GrafanaDeploymentName,
-	common.GrafanaDashboardsConfigMapName,
-	common.GrafanaDatasourcesConfigMapName,
-	common.GrafanaRouteName,
-	common.GrafanaProvidersConfigMapName,
-	common.GrafanaServiceAccountName,
-	common.GrafanaServiceName,
+	config.GrafanaDeploymentName,
+	config.GrafanaDashboardsConfigMapName,
+	config.GrafanaDatasourcesConfigMapName,
+	config.GrafanaRouteName,
+	config.GrafanaProvidersConfigMapName,
+	config.GrafanaServiceAccountName,
+	config.GrafanaServiceName,
 }
 
 var Mockplugina100 = v1alpha1.GrafanaPlugin{
@@ -62,7 +62,7 @@ var MockDashboard = v1alpha1.GrafanaDashboard{
 
 var MockGrafana = v1alpha1.Grafana{
 	Status: v1alpha1.GrafanaStatus{
-		Phase:            0,
+		Phase:            v1alpha1.PhaseReconciling,
 		InstalledPlugins: v1alpha1.PluginList{},
 	},
 }

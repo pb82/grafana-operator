@@ -5,26 +5,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+type StatusPhase string
+
+var (
+	NoPhase          StatusPhase
+	PhaseReconciling StatusPhase = "reconciling"
+	PhaseFailing     StatusPhase = "failing"
+)
 
 // GrafanaSpec defines the desired state of Grafana
 // +k8s:openapi-gen=true
 type GrafanaSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	AdminPassword          string                  `json:"adminPassword"`
-	AdminUser              string                  `json:"adminUser"`
-	Anonymous              bool                    `json:"anonymous"`
-	BasicAuth              bool                    `json:"basicAuth"`
 	Config                 GrafanaConfig           `json:"config"`
 	Containers             []v1.Container          `json:"containers,omitempty"`
 	DashboardLabelSelector []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
-	DisableLoginForm       bool                    `json:"disableLoginForm"`
-	DisableSignoutMenu     bool                    `json:"disableSignoutMenu"`
 	Ingress                GrafanaIngress          `json:"ingress,omitempty"`
 	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
-	LogLevel               string                  `json:"logLevel"`
 	Secrets                []string                `json:"secrets,omitempty"`
 	ConfigMaps             []string                `json:"configMaps,omitempty"`
 	Service                GrafanaService          `json:"service,omitempty"`
@@ -34,7 +30,7 @@ type GrafanaSpec struct {
 type GrafanaService struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
-	Type        string            `json:"type,omitempty"`
+	Type        v1.ServiceType    `json:"type,omitempty"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
@@ -350,12 +346,12 @@ type GrafanaConfigPlugins struct {
 // GrafanaStatus defines the observed state of Grafana
 // +k8s:openapi-gen=true
 type GrafanaStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Phase            int        `json:"phase"`
-	InstalledPlugins PluginList `json:"installedPlugins"`
-	FailedPlugins    PluginList `json:"failedPlugins"`
-	LastConfig       string     `json:"lastConfig"`
+	Phase            StatusPhase `json:"phase"`
+	InstalledPlugins PluginList  `json:"installedPlugins"`
+	FailedPlugins    PluginList  `json:"failedPlugins"`
+	LastConfig       string      `json:"lastConfig"`
+	AdminUser        string      `json:"adminUser"`
+	AdminPassword    string      `json:"adminPassword"`
 }
 
 // GrafanaPlugin contains information about a single plugin
