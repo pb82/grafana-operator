@@ -96,7 +96,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan sch
 					log.Error(err, fmt.Sprintf("error adding secondary watch for %v", common.RouteKind))
 				} else {
 					log.Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
-
 				}
 			}
 		}

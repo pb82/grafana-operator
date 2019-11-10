@@ -2,14 +2,14 @@ package config
 
 import (
 	"github.com/go-ini/ini"
-	"github.com/integr8ly/grafana-operator/pkg/controller/grafana"
+	testing2 "github.com/integr8ly/grafana-operator/pkg/controller/testing"
 	"testing"
 )
 
 func TestIniConfig_Build(t *testing.T) {
-	cr := grafana.MockCR.DeepCopy()
-	cr.Spec.Config.Auth.DisableLoginForm = true
+	cr := testing2.MockCR.DeepCopy()
 	cr.Spec.Config.Auth.LoginCookieName = "dummy"
+	cr.Spec.Config.Auth.DisableLoginForm = true
 
 	config := NewIniConfig(cr)
 	err := config.Build()
@@ -37,10 +37,6 @@ func TestIniConfig_Build(t *testing.T) {
 
 	if key, err := sect.GetKey("plugins"); err != nil || key.String() != GrafanaPluginsPath {
 		t.Errorf("invalid value for grafana plugins path")
-	}
-
-	if key, err := sect.GetKey("provisioning"); err != nil || key.String() != GrafanaProvisioningPath {
-		t.Errorf("invalid value for grafana provisioning path")
 	}
 
 	sect, err = parsed.GetSection("auth")

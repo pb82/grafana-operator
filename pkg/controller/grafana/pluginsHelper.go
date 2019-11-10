@@ -56,7 +56,7 @@ func (h *PluginsHelperImpl) BuildEnv(cr *integreatly.Grafana) string {
 }
 
 // Append a status message to the origin dashboard of a plugin
-func (h *PluginsHelperImpl) PickLatestVersions(requested integreatly.PluginList) (integreatly.PluginList, error) {
+func (h *PluginsHelperImpl) pickLatestVersions(requested integreatly.PluginList) (integreatly.PluginList, error) {
 	var latestVersions integreatly.PluginList
 	for _, plugin := range requested {
 		result, err := requested.HasNewerVersionOf(&plugin)
@@ -90,7 +90,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 	pluginsUpdated := false
 
 	// Try to pick the latest versions of all plugins
-	requested, err := h.PickLatestVersions(requested)
+	requested, err := h.pickLatestVersions(requested)
 	if err != nil {
 		log.Error(err, "unable to pick latest plugin versions")
 	}

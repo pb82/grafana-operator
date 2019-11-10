@@ -1,8 +1,7 @@
-package grafana
+package testing
 
 import (
 	"github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,16 +14,6 @@ var MockCR = v1alpha1.Grafana{
 	Spec: v1alpha1.GrafanaSpec{
 		Containers: []v12.Container{},
 	},
-}
-
-var Templates = []string{
-	config.GrafanaDeploymentName,
-	config.GrafanaDashboardsConfigMapName,
-	config.GrafanaDatasourcesConfigMapName,
-	config.GrafanaRouteName,
-	config.GrafanaProvidersConfigMapName,
-	config.GrafanaServiceAccountName,
-	config.GrafanaServiceName,
 }
 
 var Mockplugina100 = v1alpha1.GrafanaPlugin{
