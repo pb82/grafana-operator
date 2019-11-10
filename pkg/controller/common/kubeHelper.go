@@ -302,17 +302,3 @@ func (h KubeHelperImpl) RestartGrafana() error {
 
 	return nil
 }
-
-// AppendMessage a status message to the origin dashboard of a plugin
-func AppendMessage(message string, dashboard *v1alpha1.GrafanaDashboard) {
-	if dashboard == nil {
-		return
-	}
-
-	status := v1alpha1.GrafanaDashboardStatusMessage{
-		Message:   message,
-		Timestamp: time.Now().Format(time.RFC850),
-	}
-
-	dashboard.Status.Messages = append(dashboard.Status.Messages, status)
-}

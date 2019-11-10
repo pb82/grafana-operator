@@ -2,11 +2,17 @@ package grafana
 
 import (
 	"context"
+	"fmt"
 	i8ly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
 	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
+	routev1 "github.com/openshift/api/route/v1"
+	"k8s.io/api/apps/v1beta1"
+	v1 "k8s.io/api/core/v1"
+	v1beta12 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -21,17 +27,10 @@ const ControllerName = "grafana-controller"
 
 var log = logf.Log.WithName(ControllerName)
 
-const OpenShiftOAuthRedirect = "serviceaccounts.openshift.io/oauth-redirectreference.primary"
-
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
-
 // Add creates a new Grafana Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+func Add(mgr manager.Manager, autodetectChannel chan schema.GroupVersionKind) error {
+	return add(mgr, newReconciler(mgr), autodetectChannel)
 }
 
 // newReconciler returns a new reconcile.Reconciler
@@ -44,7 +43,6 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		scheme:   mgr.GetScheme(),
 		helper:   common.NewKubeHelper(),
 		plugins:  newPluginsHelper(),
-		config:   config.GetControllerConfig(),
 		context:  ctx,
 		cancel:   cancel,
 		recorder: mgr.GetRecorder(ControllerName),
@@ -52,7 +50,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, autodetectChannel chan schema.GroupVersionKind) error {
 	// Create a new controller
 	c, err := controller.New("grafana-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -60,7 +58,51 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Grafana
-	return c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &i8ly.Grafana{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1beta1.Deployment{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1beta12.Ingress{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1.ConfigMap{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1.Service{}); err != nil {
+		return err
+	}
+
+	if err = watchSecondaryResource(c, &v1.ServiceAccount{}); err != nil {
+		return err
+	}
+
+	go func() {
+		for gvk := range autodetectChannel {
+			// Watch routes if they exist on the cluster
+			if gvk.String() == routev1.SchemeGroupVersion.WithKind(common.RouteKind).String() {
+				err = c.Watch(&source.Kind{Type: &routev1.Route{}}, &handler.EnqueueRequestForOwner{
+					IsController: true,
+					OwnerType:    &i8ly.Grafana{},
+				})
+
+				if err != nil {
+					log.Error(err, fmt.Sprintf("error adding secondary watch for %v", common.RouteKind))
+				} else {
+					log.Info(fmt.Sprintf("added secondary watch for %v", common.RouteKind))
+
+				}
+			}
+		}
+	}()
+
+	return nil
 }
 
 var _ reconcile.Reconciler = &ReconcileGrafana{}
@@ -73,21 +115,29 @@ type ReconcileGrafana struct {
 	scheme   *runtime.Scheme
 	helper   *common.KubeHelperImpl
 	plugins  *PluginsHelperImpl
-	config   *config.ControllerConfig
 	context  context.Context
 	cancel   context.CancelFunc
 	recorder record.EventRecorder
+}
+
+func watchSecondaryResource(c controller.Controller, resource runtime.Object) error {
+	return c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &i8ly.Grafana{},
+	})
 }
 
 // Reconcile reads that state of the cluster for a Grafana object and makes changes based on the state read
 // and what is in the Grafana.Spec
 func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	instance := &i8ly.Grafana{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	cfg := config.GetControllerConfig()
+
+	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Stop the dashboard controller from reconciling when grafana is not installed
-			r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+			cfg.RemoveConfigItem(config.ConfigDashboardLabelSelector)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -118,11 +168,15 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 
 func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile.Result, error) {
 	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
-
 	cr.Status.Phase = i8ly.PhaseFailing
 
-	err := r.client.Update(r.context, cr)
+	err := r.client.Status().Update(r.context, cr)
 	if err != nil {
+		// Ignore conflicts here to prevent cycling between success
+		// and error
+		if errors.IsConflict(err) {
+			err = nil
+		}
 		return reconcile.Result{}, err
 	}
 
@@ -131,7 +185,7 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 
 func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana) (reconcile.Result, error) {
 	cr.Status.Phase = i8ly.PhaseReconciling
-	err := r.client.Update(r.context, cr)
+	err := r.client.Status().Update(r.context, cr)
 	if err != nil {
 		return r.manageError(cr, err)
 	}

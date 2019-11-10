@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	integreatly "github.com/integr8ly/grafana-operator/pkg/apis/integreatly/v1alpha1"
-	"github.com/integr8ly/grafana-operator/pkg/controller/common"
 	"github.com/integr8ly/grafana-operator/pkg/controller/config"
 	"net/http"
 	"strings"
@@ -105,8 +104,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		// Don't allow to install multiple versions of the same plugin
 		if filteredPlugins.HasSomeVersionOf(&plugin) == true {
 			installedVersion := filteredPlugins.GetInstalledVersionOf(&plugin)
-			msg := fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version)
-			common.AppendMessage(msg, plugin.Origin)
+			log.Info(fmt.Sprintf("not installing version %s of %s because %s is already installed", plugin.Version, plugin.Name, installedVersion.Version))
 			continue
 		}
 
@@ -124,8 +122,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 		// New plugin
 		if cr.Status.InstalledPlugins.HasSomeVersionOf(&plugin) == false {
 			filteredPlugins = append(filteredPlugins, plugin)
-			msg := fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version)
-			common.AppendMessage(msg, plugin.Origin)
+			log.Info(fmt.Sprintf("installing plugin %s@%s", plugin.Name, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}
@@ -140,8 +137,7 @@ func (h *PluginsHelperImpl) FilterPlugins(cr *integreatly.Grafana, requested int
 			requested.VersionsOf(&plugin) == 1 {
 			installedVersion := cr.Status.InstalledPlugins.GetInstalledVersionOf(&plugin)
 			filteredPlugins = append(filteredPlugins, plugin)
-			msg := fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version)
-			common.AppendMessage(msg, plugin.Origin)
+			log.Info(fmt.Sprintf("changing version of plugin %s form %s to %s", plugin.Name, installedVersion.Version, plugin.Version))
 			pluginsUpdated = true
 			continue
 		}

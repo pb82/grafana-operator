@@ -53,10 +53,10 @@ func GrafanaIngress(cr *v1alpha1.Grafana) *v1beta1.Ingress {
 }
 
 func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingress) *v1beta1.Ingress {
-	ingress := currentState.DeepCopy()
-	ingress.Labels = cr.Spec.Ingress.Labels
-	ingress.Annotations = cr.Spec.Ingress.Annotations
-	ingress.Spec = v1beta1.IngressSpec{
+	reconciled := currentState.DeepCopy()
+	reconciled.Labels = cr.Spec.Ingress.Labels
+	reconciled.Annotations = cr.Spec.Ingress.Annotations
+	reconciled.Spec = v1beta1.IngressSpec{
 		TLS: getIngressTLS(cr),
 		Rules: []v1beta1.IngressRule{
 			{
@@ -77,7 +77,7 @@ func GrafanaIngressReconciled(cr *v1alpha1.Grafana, currentState *v1beta1.Ingres
 			},
 		},
 	}
-	return ingress
+	return reconciled
 }
 
 func GrafanaIngressSelector(cr *v1alpha1.Grafana) client.ObjectKey {

@@ -108,18 +108,12 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 	controllerConfig := config.GetControllerConfig()
 
 	param := GrafanaParameters{
-		AdminPassword:                   option(cr.Spec.AdminPassword, "secret"),
-		AdminUser:                       option(cr.Spec.AdminUser, "root"),
-		Anonymous:                       cr.Spec.Anonymous,
-		BasicAuth:                       cr.Spec.BasicAuth,
-		DisableLoginForm:                cr.Spec.DisableLoginForm,
-		DisableSignoutMenu:              cr.Spec.DisableSignoutMenu,
-		GrafanaConfigHash:               cr.Status.LastConfig,
 		GrafanaConfigMapName:            config.GrafanaConfigMapName,
 		GrafanaDashboardsConfigMapName:  config.GrafanaDashboardsConfigMapName,
 		GrafanaDatasourcesConfigMapName: config.GrafanaDatasourcesConfigMapName,
 		GrafanaDeploymentName:           config.GrafanaDeploymentName,
 		GrafanaImage:                    controllerConfig.GetConfigString(config.ConfigGrafanaImage, config.GrafanaImage),
+		GrafanaVersion:                  controllerConfig.GetConfigString(config.ConfigGrafanaImageTag, config.GrafanaVersion),
 		GrafanaIngressAnnotations:       cr.Spec.Ingress.Annotations,
 		GrafanaIngressLabels:            cr.Spec.Ingress.Labels,
 		GrafanaIngressName:              config.GrafanaIngressName,
@@ -132,14 +126,11 @@ func newTemplateHelper(cr *integreatly.Grafana) *TemplateHelper {
 		GrafanaServiceAnnotations:       cr.Spec.Service.Annotations,
 		GrafanaServiceLabels:            cr.Spec.Service.Labels,
 		GrafanaServiceName:              config.GrafanaServiceName,
-		GrafanaVersion:                  controllerConfig.GetConfigString(config.ConfigGrafanaImageTag, config.GrafanaVersion),
 		Hostname:                        cr.Spec.Ingress.Hostname,
-		LogLevel:                        getLogLevel(cr.Spec.LogLevel),
 		Namespace:                       cr.Namespace,
 		PluginsInitContainerImage:       controllerConfig.GetConfigString(config.ConfigPluginsInitContainerImage, config.PluginsInitContainerImage),
 		PluginsInitContainerTag:         controllerConfig.GetConfigString(config.ConfigPluginsInitContainerTag, config.PluginsInitContainerTag),
 		PodLabelValue:                   controllerConfig.GetConfigString(config.ConfigPodLabelValue, config.PodLabelDefaultValue),
-		Replicas:                        cr.Spec.InitialReplicas,
 	}
 
 	templatePath := os.Getenv("TEMPLATE_PATH")

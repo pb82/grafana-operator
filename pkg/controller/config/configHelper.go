@@ -29,7 +29,6 @@ func (i *IniConfig) appendPathsSection(config *ini.File) error {
 	section.NewKey("data", GrafanaDataPath)
 	section.NewKey("logs", GrafanaLogsPath)
 	section.NewKey("plugins", GrafanaPluginsPath)
-	section.NewKey("provisioning", GrafanaProvisioningPath)
 	return nil
 }
 

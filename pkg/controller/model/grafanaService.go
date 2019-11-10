@@ -17,7 +17,7 @@ func getServiceType(cr *v1alpha1.Grafana) v1.ServiceType {
 	return cr.Spec.Service.Type
 }
 
-func GetGrafanaPort(cr *v1alpha1.Grafana) int32 {
+func GetGrafanaPort(cr *v1alpha1.Grafana) int {
 	if cr.Spec.Config.Server.HttpPort == "" {
 		return GrafanaHttpPort
 	}
@@ -27,7 +27,7 @@ func GetGrafanaPort(cr *v1alpha1.Grafana) int32 {
 		return GrafanaHttpPort
 	}
 
-	return int32(port)
+	return port
 }
 
 func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
@@ -35,7 +35,7 @@ func getServicePorts(cr *v1alpha1.Grafana) []v1.ServicePort {
 		{
 			Name:       "grafana",
 			Protocol:   "TCP",
-			Port:       GetGrafanaPort(cr),
+			Port:       int32(GetGrafanaPort(cr)),
 			TargetPort: intstr.FromString("grafana-http"),
 		},
 	}
@@ -64,12 +64,12 @@ func GrafanaService(cr *v1alpha1.Grafana) *v1.Service {
 }
 
 func GrafanaServiceReconciled(cr *v1alpha1.Grafana, currentState *v1.Service) *v1.Service {
-	service := currentState.DeepCopy()
-	service.Labels = cr.Spec.Service.Labels
-	service.Annotations = cr.Spec.Service.Annotations
-	service.Spec.Ports = getServicePorts(cr)
-	service.Spec.Type = getServiceType(cr)
-	return service
+	reconciled := currentState.DeepCopy()
+	reconciled.Labels = cr.Spec.Service.Labels
+	reconciled.Annotations = cr.Spec.Service.Annotations
+	reconciled.Spec.Ports = getServicePorts(cr)
+	reconciled.Spec.Type = getServiceType(cr)
+	return reconciled
 }
 
 func GrafanaServiceSelector(cr *v1alpha1.Grafana) client.ObjectKey {

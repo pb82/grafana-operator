@@ -46,8 +46,8 @@ func GrafanaConfig(cr *v1alpha1.Grafana) (*v1.ConfigMap, error) {
 	return configMap, nil
 }
 
-func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentStatue *v1.ConfigMap) (*v1.ConfigMap, error) {
-	configMap := currentStatue.DeepCopy()
+func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentState *v1.ConfigMap) (*v1.ConfigMap, error) {
+	reconciled := currentState.DeepCopy()
 
 	grafanaIni := config.NewIniConfig(cr)
 	err := grafanaIni.Build()
@@ -55,12 +55,12 @@ func GrafanaConfigReconciled(cr *v1alpha1.Grafana, currentStatue *v1.ConfigMap) 
 		return nil, err
 	}
 
-	configMap.Annotations = map[string]string{
-		"lastConfig": grafanaIni.Hash,
+	reconciled.Annotations = map[string]string{
+		LastConfigAnnotation: grafanaIni.Hash,
 	}
 
-	configMap.Data[GrafanaConfigFileName] = grafanaIni.Contents
-	return configMap, nil
+	reconciled.Data[GrafanaConfigFileName] = grafanaIni.Contents
+	return reconciled, nil
 }
 
 func GrafanaConfigSelector(cr *v1alpha1.Grafana) client.ObjectKey {

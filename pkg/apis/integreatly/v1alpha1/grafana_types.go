@@ -20,10 +20,11 @@ type GrafanaSpec struct {
 	Containers             []v1.Container          `json:"containers,omitempty"`
 	DashboardLabelSelector []*metav1.LabelSelector `json:"dashboardLabelSelector,omitempty"`
 	Ingress                GrafanaIngress          `json:"ingress,omitempty"`
-	InitialReplicas        int                     `json:"initialReplicas,omitempty"`
 	Secrets                []string                `json:"secrets,omitempty"`
 	ConfigMaps             []string                `json:"configMaps,omitempty"`
 	Service                GrafanaService          `json:"service,omitempty"`
+	Deployment             GrafanaDeployment       `json:"deployment,omitempty"`
+	Resources              v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // GrafanaService provides a means to configure the service
@@ -31,6 +32,13 @@ type GrafanaService struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Type        v1.ServiceType    `json:"type,omitempty"`
+}
+
+// GrafanaDeployment provides a means to configure the deployment
+type GrafanaDeployment struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Replicas    int32             `json:"replicas"`
 }
 
 // GrafanaIngress provides a means to configure the ingress created
@@ -349,7 +357,6 @@ type GrafanaStatus struct {
 	Phase            StatusPhase `json:"phase"`
 	InstalledPlugins PluginList  `json:"installedPlugins"`
 	FailedPlugins    PluginList  `json:"failedPlugins"`
-	LastConfig       string      `json:"lastConfig"`
 	AdminUser        string      `json:"adminUser"`
 	AdminPassword    string      `json:"adminPassword"`
 }
@@ -358,7 +365,6 @@ type GrafanaStatus struct {
 type GrafanaPlugin struct {
 	Name    string            `json:"name"`
 	Version string            `json:"version"`
-	Origin  *GrafanaDashboard `json:"-"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -15,6 +16,7 @@ type ActionRunner interface {
 	RunAll(desiredState DesiredClusterState) error
 	create(obj runtime.Object) error
 	update(obj runtime.Object) error
+	delete(obj runtime.Object) error
 }
 
 type ClusterAction interface {
@@ -71,6 +73,11 @@ func (i *ClusterActionRunner) create(obj runtime.Object) error {
 
 	err = i.client.Create(i.ctx, obj)
 	if err != nil {
+		// Update conflicts can happen frequently when kubernetes updates the resource
+		// in the background
+		if errors.IsConflict(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -84,6 +91,10 @@ func (i *ClusterActionRunner) update(obj runtime.Object) error {
 	}
 
 	return i.client.Update(i.ctx, obj)
+}
+
+func (i *ClusterActionRunner) delete(obj runtime.Object) error {
+	return i.client.Delete(i.ctx, obj)
 }
 
 // An action to create generic kubernetes resources
@@ -100,10 +111,34 @@ type GenericUpdateAction struct {
 	Msg string
 }
 
+type WaitForRouteAction struct {
+	Ref runtime.Object
+	Msg string
+}
+
+type LogAction struct {
+	Msg string
+}
+
+// An action to delete generic kubernetes resources
+// (resources that don't require special treatment)
+type GenericDeleteAction struct {
+	Ref runtime.Object
+	Msg string
+}
+
 func (i GenericCreateAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.create(i.Ref)
 }
 
 func (i GenericUpdateAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.update(i.Ref)
+}
+
+func (i GenericDeleteAction) Run(runner ActionRunner) (string, error) {
+	return i.Msg, runner.delete(i.Ref)
+}
+
+func (i LogAction) Run(runner ActionRunner) (string, error) {
+	return i.Msg, nil
 }
