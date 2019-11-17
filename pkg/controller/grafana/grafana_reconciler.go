@@ -192,16 +192,15 @@ func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) 
 
 		// Build the new list of plugins for the init container to consume
 		i.PluginsEnv = i.Plugins.BuildEnv(cr)
-
 		return common.LogAction{
-			Msg: fmt.Sprintf("plugins updated: %s", i.PluginsEnv),
+			Msg: fmt.Sprintf("plugins updated to %s", i.PluginsEnv),
 		}
 	} else {
 		// Rebuild the env var from the installed plugins
-		i.PluginsEnv = i.Plugins.BuildEnv(cr)
 
+		i.PluginsEnv = i.Plugins.BuildEnv(cr)
 		return common.LogAction{
-			Msg: "no updates to plugins",
+			Msg: "plugins unchanged",
 		}
 	}
 }

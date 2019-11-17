@@ -99,8 +99,6 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
-	log.Info("== dashboard event")
-
 	// Fetch the GrafanaDashboard instance
 	instance := &i8ly.GrafanaDashboard{}
 	err := r.client.Get(r.context, request.NamespacedName, instance)
@@ -138,8 +136,12 @@ func (r *ReconcileGrafanaDashboard) isValidDashboard(d *i8ly.GrafanaDashboard, d
 }
 
 func (r *ReconcileGrafanaDashboard) importDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	log.Info("=== importing dashboard")
 	r.config.SetPluginsFor(d)
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
+	r.config.RemovePluginsFor(d)
 	return reconcile.Result{}, nil
 }
 
@@ -164,10 +166,6 @@ func (r *ReconcileGrafanaDashboard) loadDashboardFromURL(d *i8ly.GrafanaDashboar
 	}
 
 	return response, nil
-}
-
-func (r *ReconcileGrafanaDashboard) deleteDashboard(d *i8ly.GrafanaDashboard) (reconcile.Result, error) {
-	return reconcile.Result{}, nil
 }
 
 func (r *ReconcileGrafanaDashboard) manageError(cr *i8ly.Grafana, issue error) (reconcile.Result, error) {
