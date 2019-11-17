@@ -99,6 +99,8 @@ func (r *ReconcileGrafanaDashboard) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 	}
 
+	log.Info("== dashboard event")
+
 	// Fetch the GrafanaDashboard instance
 	instance := &i8ly.GrafanaDashboard{}
 	err := r.client.Get(r.context, request.NamespacedName, instance)

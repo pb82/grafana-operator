@@ -45,6 +45,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		plugins:  newPluginsHelper(),
 		context:  ctx,
 		cancel:   cancel,
+		config:   config.GetControllerConfig(),
 		recorder: mgr.GetRecorder(ControllerName),
 	}
 }
@@ -116,6 +117,7 @@ type ReconcileGrafana struct {
 	plugins  *PluginsHelperImpl
 	context  context.Context
 	cancel   context.CancelFunc
+	config   *config.ControllerConfig
 	recorder record.EventRecorder
 }
 
@@ -130,13 +132,11 @@ func watchSecondaryResource(c controller.Controller, resource runtime.Object) er
 // and what is in the Grafana.Spec
 func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	instance := &i8ly.Grafana{}
-	cfg := config.GetControllerConfig()
-
 	err := r.client.Get(r.context, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Stop the dashboard controller from reconciling when grafana is not installed
-			cfg.RemoveConfigItem(config.ConfigDashboardLabelSelector)
+			r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
@@ -168,6 +168,7 @@ func (r *ReconcileGrafana) Reconcile(request reconcile.Request) (reconcile.Resul
 func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile.Result, error) {
 	r.recorder.Event(cr, "Warning", "ProcessingError", issue.Error())
 	cr.Status.Phase = i8ly.PhaseFailing
+	cr.Status.Message = issue.Error()
 
 	err := r.client.Status().Update(r.context, cr)
 	if err != nil {
@@ -178,6 +179,10 @@ func (r *ReconcileGrafana) manageError(cr *i8ly.Grafana, issue error) (reconcile
 		}
 		return reconcile.Result{}, err
 	}
+
+	// Stop reconciling dashboards when there are problems with the
+	// Grafana instance
+	r.config.RemoveConfigItem(config.ConfigDashboardLabelSelector)
 
 	return reconcile.Result{Requeue: false}, nil
 }
@@ -190,5 +195,10 @@ func (r *ReconcileGrafana) manageSuccess(cr *i8ly.Grafana) (reconcile.Result, er
 	}
 
 	log.Info("desired cluster state met")
+
+	// Allow the dashboard controller to reconcile once Grafana
+	// is successfully installed
+	r.config.AddConfigItem(config.ConfigDashboardLabelSelector, cr.Spec.DashboardLabelSelector)
+
 	return reconcile.Result{RequeueAfter: config.RequeueDelay}, nil
 }

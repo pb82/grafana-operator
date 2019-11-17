@@ -80,16 +80,12 @@ func (c *ControllerConfig) GetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) v
 }
 
 func (c *ControllerConfig) SetPluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
-	c.Lock()
-	defer c.Unlock()
 	id := c.GetDashboardId(dashboard)
 	c.Plugins[id] = dashboard.Spec.Plugins
 	c.AddConfigItem(ConfigGrafanaPluginsUpdated, time.Now())
 }
 
 func (c *ControllerConfig) RemovePluginsFor(dashboard *v1alpha1.GrafanaDashboard) {
-	c.Lock()
-	defer c.Unlock()
 	id := c.GetDashboardId(dashboard)
 	if _, ok := c.Plugins[id]; ok {
 		delete(c.Plugins, id)
@@ -114,8 +110,6 @@ func (c *ControllerConfig) RemoveConfigItem(key string) {
 }
 
 func (c *ControllerConfig) GetConfigItem(key string, defaultValue interface{}) interface{} {
-	c.Lock()
-	defer c.Unlock()
 	if c.HasConfigItem(key) {
 		return c.Values[key]
 	}
@@ -123,8 +117,6 @@ func (c *ControllerConfig) GetConfigItem(key string, defaultValue interface{}) i
 }
 
 func (c *ControllerConfig) GetConfigString(key, defaultValue string) string {
-	c.Lock()
-	defer c.Unlock()
 	if c.HasConfigItem(key) {
 		return c.Values[key].(string)
 	}
@@ -132,8 +124,6 @@ func (c *ControllerConfig) GetConfigString(key, defaultValue string) string {
 }
 
 func (c *ControllerConfig) GetConfigBool(key string, defaultValue bool) bool {
-	c.Lock()
-	defer c.Unlock()
 	if c.HasConfigItem(key) {
 		return c.Values[key].(bool)
 	}
@@ -141,8 +131,6 @@ func (c *ControllerConfig) GetConfigBool(key string, defaultValue bool) bool {
 }
 
 func (c *ControllerConfig) GetConfigTimestamp(key string, defaultValue time.Time) time.Time {
-	c.Lock()
-	defer c.Unlock()
 	if c.HasConfigItem(key) {
 		return c.Values[key].(time.Time)
 	}
@@ -150,6 +138,8 @@ func (c *ControllerConfig) GetConfigTimestamp(key string, defaultValue time.Time
 }
 
 func (c *ControllerConfig) HasConfigItem(key string) bool {
+	c.Lock()
+	defer c.Unlock()
 	_, ok := c.Values[key]
 	return ok
 }

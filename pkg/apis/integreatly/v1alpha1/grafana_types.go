@@ -355,6 +355,7 @@ type GrafanaConfigPlugins struct {
 // +k8s:openapi-gen=true
 type GrafanaStatus struct {
 	Phase            StatusPhase `json:"phase"`
+	Message          string      `json:"message"`
 	InstalledPlugins PluginList  `json:"installedPlugins"`
 	FailedPlugins    PluginList  `json:"failedPlugins"`
 	AdminUser        string      `json:"adminUser"`
@@ -363,8 +364,8 @@ type GrafanaStatus struct {
 
 // GrafanaPlugin contains information about a single plugin
 type GrafanaPlugin struct {
-	Name    string            `json:"name"`
-	Version string            `json:"version"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

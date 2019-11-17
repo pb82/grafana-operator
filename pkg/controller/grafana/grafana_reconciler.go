@@ -188,15 +188,25 @@ func (i *GrafanaReconciler) getGrafanaPluginsDesiredState(cr *v1alpha1.Grafana) 
 	// If 'updated' is false then no changes have to be applied
 	filteredPlugins, updated := i.Plugins.FilterPlugins(cr, requestedPlugins)
 	if updated {
-		return i.reconcilePlugins(cr, filteredPlugins)
-	}
+		i.reconcilePlugins(cr, filteredPlugins)
 
-	return common.LogAction{
-		Msg: "no updates to plugins",
+		// Build the new list of plugins for the init container to consume
+		i.PluginsEnv = i.Plugins.BuildEnv(cr)
+
+		return common.LogAction{
+			Msg: fmt.Sprintf("plugins updated: %s", i.PluginsEnv),
+		}
+	} else {
+		// Rebuild the env var from the installed plugins
+		i.PluginsEnv = i.Plugins.BuildEnv(cr)
+
+		return common.LogAction{
+			Msg: "no updates to plugins",
+		}
 	}
 }
 
-func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alpha1.PluginList) common.ClusterAction {
+func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alpha1.PluginList) {
 	var validPlugins []v1alpha1.GrafanaPlugin
 	var failedPlugins []v1alpha1.GrafanaPlugin
 
@@ -213,11 +223,4 @@ func (i *GrafanaReconciler) reconcilePlugins(cr *v1alpha1.Grafana, plugins v1alp
 
 	cr.Status.InstalledPlugins = validPlugins
 	cr.Status.FailedPlugins = failedPlugins
-
-	// Build the new list of plugins for the init container to consume
-	i.PluginsEnv = i.Plugins.BuildEnv(cr)
-
-	return common.LogAction{
-		Msg: fmt.Sprintf("plugins updated: %s", i.PluginsEnv),
-	}
 }

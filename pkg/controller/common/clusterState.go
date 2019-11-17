@@ -56,11 +56,7 @@ func (i *ClusterState) Read(ctx context.Context, cr *v1alpha1.Grafana, client cl
 		err = i.readGrafanaIngress(ctx, cr, client)
 	}
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (i *ClusterState) readGrafanaService(ctx context.Context, cr *v1alpha1.Grafana, client client.Client) error {
